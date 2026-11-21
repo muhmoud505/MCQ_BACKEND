@@ -5,12 +5,22 @@ const parseBulkText=require('../utils/parseBulkText');
 
 const getQuestions=async(req,res)=>{
     try {
-        const {subjectId}=req.query;
+        const {subjectId,page=1,limit=20}=req.query;
         const filter = subjectId ? {subjectId}:{};
-        const questions= await Question.find(filter).sort({createdAt:-1});
+        const pageNum=parseInt(page);
+        const limitNum=parseInt(limit);
+        const skip=(pageNum-1)*limitNum;
+        const total= await Question.countDocuments(filter);
+        const questions=await Question.find(filter)
+        .sort({createdAt:-1})
+        .skip(skip)
+        .limit(limitNum);
         res.status(200).json({
             success:true,
             count:questions.length,
+            total,
+            totalPage:Math.ceil(total/limitNum),
+            currentPage:pageNum,
             data:questions,
         })
     } catch (error) {
